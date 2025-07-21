@@ -5,3 +5,8 @@ langchain
 pgvector
 psycopg2-binary
 ipykernel
+chromadb
+typer[all]
+pandas
+pypdf
+
