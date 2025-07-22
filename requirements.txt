@@ -1,5 +1,7 @@
 python-dotenv
 langchain-community
+langchain-chroma
+langchain-experimental
 langchain-openai
 langchain
 pgvector
@@ -10,4 +12,3 @@ typer[all]
 pandas
 pypdf
 ollama
-

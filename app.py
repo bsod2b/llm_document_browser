@@ -4,9 +4,9 @@ import typer
 from typing import List
 
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
-from langchain.retrievers import BM25Retriever
+from langchain_community.retrievers import BM25Retriever
 from langchain_community.llms import Ollama
-from langchain.agents import create_pandas_dataframe_agent
+from langchain_experimental.agents import create_pandas_dataframe_agent
 
 from vdb import (
     CHROMA_PATH,
@@ -15,6 +15,9 @@ from vdb import (
     reset_vectorstore,
     all_documents,
 )
+
+from dotenv import load_dotenv
+load_dotenv()
 
 app = typer.Typer(help="Persistent, Search-Augmented Q&A Engine")
 

@@ -2,11 +2,11 @@ import os
 import shutil
 from typing import List
 
-from langchain.docstore.document import Document
+from langchain_community.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OllamaEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.document_loaders import TextLoader, CSVLoader, PyPDFLoader
+from langchain_chroma import Chroma
+from langchain_community.document_loaders import TextLoader, CSVLoader, PyPDFLoader
 
 CHROMA_PATH = os.getenv("CHROMA_PATH", "./chroma_db")
 
@@ -39,6 +39,7 @@ def ingest_directory(directory: str, persist_dir: str = CHROMA_PATH) -> int:
     docs: List[Document] = []
     for root, _, files in os.walk(directory):
         for name in files:
+            print(f"Loading {name}...")
             docs.extend(_load_file(os.path.join(root, name)))
     if not docs:
         return 0
