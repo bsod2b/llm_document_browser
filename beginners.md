@@ -43,11 +43,11 @@ This will create a new virtual environment named `.venv` in your current folder.
 pip install -r requirements.txt
 ```
 
-We are not making our own LLM from scratch as I don't have a few thousand dollars and thousands of GPUs lying around. Therefore, we will just be building a ChatGPT Wrapper. As I don't want to host my own instance too, we'll be using their API. Create a new file in the root project directory called `.env.` and add the following line.
+We still won't train our own LLM from scratch, but instead we'll rely on [Ollama](https://ollama.com/) to run a local model. Download and install Ollama for your OS and then pull the DeepSeek model:
 
-```
-OPENAI_API_KEY="<your-api-key>"
+```bash
+ollama pull deepseek-r1
 ```
 
-Replace the `<your-api-key>` with the one you generated [here](https://platform.openai.com/api-keys)
+Keep Ollama running with `ollama serve` (or start the app) while you use the CLI. No API keys are required.
 

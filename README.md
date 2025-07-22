@@ -16,10 +16,11 @@ Python version: 3.12.11 (other versions might be compatible but no guarantee)
 
 ## Usage
 
-Start by installing the requirements (preferably in a virtual environment):
+Start by installing the requirements (preferably in a virtual environment) and ensure [Ollama](https://ollama.com/) is running with the `deepseek-r1` model:
 
 ```bash
 pip install -r requirements.txt
+ollama pull deepseek-r1
 ```
 
 The application exposes a simple command line interface:

@@ -9,4 +9,5 @@ chromadb
 typer[all]
 pandas
 pypdf
+ollama
 

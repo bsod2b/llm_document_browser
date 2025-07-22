@@ -4,7 +4,7 @@ from typing import List
 
 from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.document_loaders import TextLoader, CSVLoader, PyPDFLoader
 
@@ -12,7 +12,7 @@ CHROMA_PATH = os.getenv("CHROMA_PATH", "./chroma_db")
 
 def get_vectorstore(persist_dir: str = CHROMA_PATH) -> Chroma:
     """Return a persistent Chroma vector store."""
-    embeddings = OpenAIEmbeddings()
+    embeddings = OllamaEmbeddings(model="deepseek-r1")
     return Chroma(persist_directory=persist_dir, embedding_function=embeddings)
 
 def reset_vectorstore(persist_dir: str = CHROMA_PATH) -> None:

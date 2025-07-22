@@ -5,7 +5,7 @@ from typing import List
 
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain.retrievers import BM25Retriever
-from langchain.chat_models import ChatOpenAI
+from langchain_community.llms import Ollama
 from langchain.agents import create_pandas_dataframe_agent
 
 from vdb import (
@@ -50,7 +50,7 @@ def ask(question: str = typer.Argument(..., help="Question to ask")):
             unique[key] = doc
     docs: List = list(unique.values())[:6]
 
-    llm = ChatOpenAI(temperature=0)
+    llm = Ollama(model="deepseek-r1", temperature=0)
     chain = load_qa_with_sources_chain(llm, chain_type="stuff")
     result = chain({"question": question, "input_documents": docs}, return_only_outputs=True)
 
