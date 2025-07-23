@@ -10,3 +10,11 @@ chroma_db/
 
 # secrets
 .env
+
+# terraform
+.terraform/
+terraform.tfstate*
+
+# docker runtime volumes
+ollama-data/
+data/

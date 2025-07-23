@@ -30,3 +30,42 @@ The application exposes a simple command line interface:
 - `python app.py status` – display how many document chunks are stored.
 
 By default the vector database is stored in `./chroma_db`. Set the environment variable `CHROMA_PATH` to change this location.
+
+## Docker
+
+The repository contains a `Dockerfile` and `docker-compose.yml` to run the application together with an Ollama server. Build the images and run commands via compose:
+
+```bash
+docker compose pull
+docker compose build
+# show available CLI commands
+docker compose run --rm app --help
+```
+
+When using the container you can ingest documents or ask questions, e.g.:
+
+```bash
+docker compose run --rm app ingest --path ./docs
+docker compose run --rm app ask "your question"
+```
+
+The `ollama` service requires GPU access for best performance. Make sure your Docker environment exposes the GPU to the containers (for example using `--gpus all`).
+
+## Azure deployment with Terraform
+
+The `infra` directory holds a minimal Terraform setup for a GPU-enabled virtual machine. Provide your SSH public key and apply:
+
+```bash
+cd infra
+terraform init
+terraform apply -var="ssh_public_key=$(cat ~/.ssh/id_rsa.pub)"
+```
+
+The VM installs Docker automatically via cloud-init. After the machine is ready, SSH into it using the public IP output by Terraform and run:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+This starts the Ollama service and prepares the CLI so you can ingest documents and ask questions remotely.
