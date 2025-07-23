@@ -3,9 +3,12 @@ import pandas as pd
 import typer
 from typing import List
 
-from langchain.chains.qa_with_sources import load_qa_with_sources_chain
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_community.retrievers import BM25Retriever
-from langchain_community.llms import Ollama
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama import OllamaLLM
+from langchain.retrievers.ensemble import EnsembleRetriever
 from langchain_experimental.agents import create_pandas_dataframe_agent
 
 from vdb import (
@@ -40,29 +43,48 @@ def ask(question: str = typer.Argument(..., help="Question to ask")):
         typer.echo("Vector store not found. Please ingest documents first.")
         raise typer.Exit(code=1)
 
-    vector_docs = vectordb.similarity_search(question, k=4)
+    # --- new retrieval layer (vector + BM25) -----------------
     all_docs = all_documents(vectordb)
-    bm25 = BM25Retriever.from_documents(all_docs)
-    keyword_docs = bm25.get_relevant_documents(question)
 
-    # combine results deduplicating by page content
-    unique = {}
-    for doc in vector_docs + keyword_docs:
-        key = doc.page_content[:100]
-        if key not in unique:
-            unique[key] = doc
-    docs: List = list(unique.values())[:6]
+    retriever = EnsembleRetriever(
+        retrievers=[
+            vectordb.as_retriever(search_kwargs={"k": 4}), 
+            BM25Retriever.from_documents(all_docs)
+        ],
+        weights=[0.7, 0.3],  # Vector store has more weight
+    )  # RRF fusion
 
-    llm = Ollama(model="deepseek-r1", temperature=0)
-    chain = load_qa_with_sources_chain(llm, chain_type="stuff")
-    result = chain({"question": question, "input_documents": docs}, return_only_outputs=True)
+    # --- chain that stuffs retrieved docs into the prompt ----
+    llm = OllamaLLM(
+        model="deepseek-r1", 
+        temperature=0,
+        reasoning=False # thinking mode
+    )
 
-    typer.echo(result["output_text"])
-    if result.get("sources"):
-        typer.echo(f"Sources: {result['sources']}")
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "You are an assistant that is used for browsing documents. "
+                "Use the following context to answer the question."
+                "Only use the provided context and sources to answer questions."
+                "If you are unsure, say so.\n\n{context}",
+            ),
+            ("human", "{input}"),
+        ]
+    )
+    combine = create_stuff_documents_chain(llm, prompt)
+    rag_chain = create_retrieval_chain(retriever, combine)
+
+    result = rag_chain.invoke({"input": question})
+
+    typer.echo(result["answer"])
+    sources = {doc.metadata.get("source", "") for doc in result["context"]}
+    if sources:
+        typer.echo("Sources: " + ", ".join(sorted(sources)))
 
     # CSV tool augmentation
-    for doc in docs:
+    for doc in result["context"]:
         src = doc.metadata.get("source", "")
         if src.endswith(".csv") and os.path.exists(src):
             df = pd.read_csv(src)

@@ -1,5 +1,12 @@
-.env
+# environment
 .venv/
 .vscode/
 __pycache__/
-data
+
+# data directories
+data/
+tmp/
+chroma_db/
+
+# secrets
+.env

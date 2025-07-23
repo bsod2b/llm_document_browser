@@ -3,6 +3,7 @@ langchain-community
 langchain-chroma
 langchain-experimental
 langchain-openai
+langchain-ollama
 langchain
 pgvector
 psycopg2-binary
@@ -12,3 +13,6 @@ typer[all]
 pandas
 pypdf
 ollama
+unstructured[all-docs]
+pydantic
+rank_bm25
