@@ -28,7 +28,7 @@ def get_vectorstore(persist_dir: str = CHROMA_PATH) -> Chroma:
     """Return a persistent Chroma vector store."""
     embeddings = OllamaEmbeddings(
         model="nomic-embed-text",      
-        base_url="http://localhost:11434",
+        base_url="http://ollama:11434",
         num_thread=4,
     )
 

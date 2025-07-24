@@ -57,7 +57,7 @@ def ask(question: str = typer.Argument(..., help="Question to ask")):
     # --- chain that stuffs retrieved docs into the prompt ----
     llm = OllamaLLM(
         model="deepseek-r1", 
-        temperature=0,
+        temperature=0.2,
         reasoning=False # thinking mode
     )
 

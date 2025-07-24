@@ -7,6 +7,7 @@ __pycache__/
 data/
 tmp/
 chroma_db/
+uploads/
 
 # secrets
 .env

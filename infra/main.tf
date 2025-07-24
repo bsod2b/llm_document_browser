@@ -20,7 +20,7 @@ variable "prefix" {
 variable "location" {
   description = "Azure region"
   type        = string
-  default     = "Switzerland North"
+  default     = "Sweden Central"
 }
 
 variable "admin_username" {
@@ -125,7 +125,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   name                = "${var.prefix}-vm"
   resource_group_name = azurerm_resource_group.rg.name
   location            = var.location
-  size                = "Standard_NC6s_v3"
+  size                = "Standard_NC4as_T4_v3"
   admin_username      = var.admin_username
   network_interface_ids = [
     azurerm_network_interface.nic.id,

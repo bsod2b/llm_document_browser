@@ -4,7 +4,21 @@ package_upgrade: true
 packages:
   - docker.io
   - docker-compose
+  - curl
+  - software-properties-common
+
 runcmd:
-  - [ usermod, -aG, docker, azureuser ]
-  - [ systemctl, enable, docker ]
-  - [ systemctl, start, docker ]
+  # Add NVIDIA's GPG key and repository
+  - curl -s -L https://nvidia.github.io/libnvidia-container/gpgkey | apt-key add -
+  - distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+  - curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+  
+  # Install NVIDIA Container Toolkit
+  - apt-get update
+  - apt-get install -y nvidia-container-toolkit
+  
+  # Configure Docker to use the NVIDIA runtime and restart
+  - nvidia-ctk runtime configure --runtime=docker
+  - usermod -aG docker azureuser
+  - systemctl enable docker
+  - systemctl start docker
