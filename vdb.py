@@ -78,6 +78,29 @@ def ingest_directory(directory: str, persist_dir: str = CHROMA_PATH) -> int:
 
     return len(splits)
 
+def ingest_files(paths: List[str], persist_dir: str = CHROMA_PATH) -> int:
+    """Ingest a list of individual files."""
+    docs: List[Document] = []
+    for p in paths:
+        docs.extend(_load_file(p))
+    if not docs:
+        return 0
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splits = splitter.split_documents(docs)
+    vectordb = get_vectorstore(persist_dir)
+    batch_size = 32
+    for i in range(0, len(splits), batch_size):
+        vectordb.add_documents(splits[i:i+batch_size])
+    return len(splits)
+
+def delete_files(paths: List[str], persist_dir: str = CHROMA_PATH) -> None:
+    """Remove files and their vectors from the DB."""
+    vectordb = get_vectorstore(persist_dir)
+    for p in paths:
+        if os.path.exists(p):
+            os.remove(p)
+        vectordb.delete(where={"source": p})
+
 def all_documents(vectordb: Chroma) -> List[Document]:
     """Return all documaents stored in the vector DB."""
     data = vectordb.get(include=["documents", "metadatas"])

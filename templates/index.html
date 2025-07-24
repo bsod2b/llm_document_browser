@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>LLM Document Browser</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <form id="ask-form">
+            <textarea id="question" placeholder="Ask a question..."></textarea>
+            <button type="submit" id="ask-btn">Ask</button>
+        </form>
+        <div id="answer"></div>
+        <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" name="file">
+            <button type="submit" id="upload-btn">Upload</button>
+        </form>
+        <ul class="files" id="file-list"></ul>
+    </div>
+<script>
+document.getElementById('ask-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const question = document.getElementById('question').value;
+    const data = new FormData();
+    data.append('question', question);
+    const res = await fetch('/ask', { method: 'POST', body: data });
+    const out = await res.json();
+    document.getElementById('answer').innerText = out.answer || out.error;
+});
+
+document.getElementById('upload-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = new FormData(document.getElementById('upload-form'));
+    document.getElementById('ask-btn').disabled = true;
+    const res = await fetch('/upload', { method: 'POST', body: data });
+    const out = await res.json();
+    if (out.file) addFile(out.file);
+    document.getElementById('ask-btn').disabled = false;
+});
+
+async function loadFiles() {
+    const res = await fetch('/files');
+    const out = await res.json();
+    out.files.forEach(addFile);
+}
+
+function addFile(name) {
+    const li = document.createElement('li');
+    li.textContent = name;
+    const btn = document.createElement('button');
+    btn.textContent = '✕';
+    btn.onclick = async () => {
+        await fetch(`/files/${name}`, { method: 'DELETE' });
+        li.remove();
+    };
+    li.appendChild(btn);
+    document.getElementById('file-list').appendChild(li);
+}
+
+loadFiles();
+</script>
+</body>
+</html>

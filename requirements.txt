@@ -16,3 +16,6 @@ ollama
 unstructured[all-docs]
 pydantic
 rank_bm25
+
+fastapi
+uvicorn

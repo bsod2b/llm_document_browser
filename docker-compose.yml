@@ -22,7 +22,18 @@ services:
     depends_on:
       - ollama
     entrypoint: ["python", "app.py"]
-
+  web:
+    build: .
+    command: uvicorn api:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./data:/app/chroma_db
+      - ./uploads:/app/uploads
+    environment:
+      - CHROMA_PATH=/app/chroma_db
+    depends_on:
+      - ollama
+    ports:
+      - "8000:8000"
 volumes:
   ollama-data:
   data:

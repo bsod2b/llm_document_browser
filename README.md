@@ -69,3 +69,17 @@ docker compose up -d
 ```
 
 This starts the Ollama service and prepares the CLI so you can ingest documents and ask questions remotely.
+
+Port **8000** is opened in the VM firewall so the web UI is reachable once the
+containers are running.
+
+## Web UI
+
+A simple FastAPI application exposes a web interface that resembles the ChatGPT layout. It lets you ask questions and upload new documents directly from your browser. After deploying the Docker setup on Azure, access the UI via:
+
+```
+http://<public-ip>:8000
+```
+
+Uploaded files are stored in the `uploads/` directory and immediately ingested into the vector store.
+You can remove uploaded files again via the UI. The "Ask" button is disabled while an upload is in progress to ensure all documents are indexed before querying.
