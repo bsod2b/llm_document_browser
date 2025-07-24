@@ -3,40 +3,67 @@
 <head>
     <meta charset="utf-8">
     <title>LLM Document Browser</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body>
-    <div class="container">
-        <form id="ask-form">
-            <textarea id="question" placeholder="Ask a question..."></textarea>
-            <button type="submit" id="ask-btn">Ask</button>
+<body class="bg-gray-100">
+    <div class="max-w-xl mx-auto my-6 p-4 space-y-4">
+        <div id="answer" class="hidden whitespace-pre-line bg-white border border-gray-300 rounded-lg p-4"></div>
+        <form id="ask-form" class="flex items-end gap-2">
+            <textarea id="question" placeholder="Ask a question..." rows="1" class="flex-grow resize-none rounded-lg border border-gray-300 p-2 bg-gray-50"></textarea>
+            <button type="submit" id="ask-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Ask</button>
+            <div id="ask-spinner" class="hidden ml-2 w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
         </form>
-        <div id="answer"></div>
-        <form id="upload-form" enctype="multipart/form-data">
-            <input type="file" name="file">
-            <button type="submit" id="upload-btn">Upload</button>
-        </form>
-        <ul class="files" id="file-list"></ul>
+        <div class="flex items-center gap-2">
+            <input type="file" id="file-input" class="hidden">
+            <button type="button" id="select-file" class="px-3 py-2 border border-gray-300 rounded-lg bg-white">Add File</button>
+            <div id="upload-spinner" class="hidden w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+        </div>
+        <ul id="file-list" class="space-y-1"></ul>
     </div>
 <script>
+const questionEl = document.getElementById('question');
+const askBtn = document.getElementById('ask-btn');
+const askSpinner = document.getElementById('ask-spinner');
+const fileInput = document.getElementById('file-input');
+const uploadSpinner = document.getElementById('upload-spinner');
+
+questionEl.addEventListener('input', () => {
+    questionEl.style.height = 'auto';
+    questionEl.style.height = questionEl.scrollHeight + 'px';
+});
+
 document.getElementById('ask-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const question = document.getElementById('question').value;
+    const question = questionEl.value.trim();
+    if (!question) return;
+    askBtn.disabled = true;
+    askSpinner.classList.remove('hidden');
     const data = new FormData();
     data.append('question', question);
     const res = await fetch('/ask', { method: 'POST', body: data });
     const out = await res.json();
-    document.getElementById('answer').innerText = out.answer || out.error;
+    askSpinner.classList.add('hidden');
+    askBtn.disabled = false;
+    const ans = document.getElementById('answer');
+    ans.textContent = out.answer || out.error;
+    ans.classList.remove('hidden');
 });
 
-document.getElementById('upload-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = new FormData(document.getElementById('upload-form'));
-    document.getElementById('ask-btn').disabled = true;
+document.getElementById('select-file').addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', async () => {
+    if (!fileInput.files.length) return;
+    const data = new FormData();
+    data.append('file', fileInput.files[0]);
+    askBtn.disabled = true;
+    uploadSpinner.classList.remove('hidden');
     const res = await fetch('/upload', { method: 'POST', body: data });
     const out = await res.json();
+    uploadSpinner.classList.add('hidden');
+    askBtn.disabled = false;
     if (out.file) addFile(out.file);
-    document.getElementById('ask-btn').disabled = false;
+    fileInput.value = '';
 });
 
 async function loadFiles() {
@@ -47,9 +74,11 @@ async function loadFiles() {
 
 function addFile(name) {
     const li = document.createElement('li');
+    li.className = 'bg-white border border-gray-300 rounded-lg flex justify-between px-3 py-1';
     li.textContent = name;
     const btn = document.createElement('button');
     btn.textContent = '✕';
+    btn.className = 'text-red-500';
     btn.onclick = async () => {
         await fetch(`/files/${name}`, { method: 'DELETE' });
         li.remove();
