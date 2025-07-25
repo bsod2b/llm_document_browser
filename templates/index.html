@@ -4,22 +4,28 @@
     <meta charset="utf-8">
     <title>LLM Document Browser</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body class="bg-gray-100">
-    <div class="max-w-xl mx-auto my-6 p-4 space-y-4">
-        <div id="answer" class="hidden whitespace-pre-line bg-white border border-gray-300 rounded-lg p-4"></div>
-        <form id="ask-form" class="flex items-end gap-2">
-            <textarea id="question" placeholder="Ask a question..." rows="1" class="flex-grow resize-none rounded-lg border border-gray-300 p-2 bg-gray-50"></textarea>
-            <button type="submit" id="ask-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Ask</button>
-            <div id="ask-spinner" class="hidden ml-2 w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
-        </form>
-        <div class="flex items-center gap-2">
-            <input type="file" id="file-input" class="hidden">
-            <button type="button" id="select-file" class="px-3 py-2 border border-gray-300 rounded-lg bg-white">Add File</button>
-            <div id="upload-spinner" class="hidden w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+    <div class="flex max-h-screen">
+        <div id="sidebar" class="w-56 p-4 bg-gray-200 space-y-4 overflow-y-auto h-screen sticky top-0">
+            <div class="flex items-center gap-2">
+                <input type="file" id="file-input" class="hidden">
+                <button type="button" id="select-file" class="px-3 py-2 border border-gray-300 rounded-lg bg-white">Add File</button>
+                <div id="upload-spinner" class="hidden w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+            </div>
+            <ul id="file-list" class="space-y-1"></ul>
         </div>
-        <ul id="file-list" class="space-y-1"></ul>
+        <div class="flex-grow flex flex-col max-h-screen">
+            <div id="chat" class="flex-grow overflow-y-auto p-4 space-y-4"></div>
+            <div id="thinking" class="hidden bg-yellow-50 border border-yellow-300 rounded p-2 text-sm mx-4 mb-2"></div>
+            <form id="ask-form" class="flex items-end gap-2 p-4 bg-white">
+                <textarea id="question" placeholder="Ask a question..." rows="1" class="flex-grow resize-none rounded-lg border border-gray-300 p-2 bg-gray-50"></textarea>
+                <button type="submit" id="ask-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Ask</button>
+                <div id="ask-spinner" class="hidden ml-2 w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+            </form>
+        </div>
     </div>
 <script>
 const questionEl = document.getElementById('question');
@@ -27,6 +33,21 @@ const askBtn = document.getElementById('ask-btn');
 const askSpinner = document.getElementById('ask-spinner');
 const fileInput = document.getElementById('file-input');
 const uploadSpinner = document.getElementById('upload-spinner');
+const chatEl = document.getElementById('chat');
+const thinkingEl = document.getElementById('thinking');
+
+function addMessage(role, content) {
+    const wrap = document.createElement('div');
+    wrap.className = role === 'user' ? 'text-right' : 'text-left';
+    const bubble = document.createElement('div');
+    bubble.className = role === 'user'
+        ? 'inline-block bg-blue-100 p-2 rounded-lg'
+        : 'inline-block bg-white border border-gray-300 p-2 rounded-lg';
+    bubble.innerHTML = marked.parse(content);
+    wrap.appendChild(bubble);
+    chatEl.appendChild(wrap);
+    chatEl.scrollTop = chatEl.scrollHeight;
+}
 
 questionEl.addEventListener('input', () => {
     questionEl.style.height = 'auto';
@@ -37,6 +58,8 @@ document.getElementById('ask-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const question = questionEl.value.trim();
     if (!question) return;
+    addMessage('user', question);
+    questionEl.value = '';
     askBtn.disabled = true;
     askSpinner.classList.remove('hidden');
     const data = new FormData();
@@ -45,9 +68,17 @@ document.getElementById('ask-form').addEventListener('submit', async (e) => {
     const out = await res.json();
     askSpinner.classList.add('hidden');
     askBtn.disabled = false;
-    const ans = document.getElementById('answer');
-    ans.textContent = out.answer || out.error;
-    ans.classList.remove('hidden');
+    let ansText = out.answer || out.error;
+    if (ansText) {
+        const match = ansText.match(/<think>([\s\S]*?)<\/think>/);
+        if (match) {
+            thinkingEl.textContent = match[1].trim();
+            thinkingEl.classList.remove('hidden');
+            ansText = ansText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+            setTimeout(() => thinkingEl.classList.add('hidden'), 1000);
+        }
+        addMessage('assistant', ansText);
+    }
 });
 
 document.getElementById('select-file').addEventListener('click', () => fileInput.click());
