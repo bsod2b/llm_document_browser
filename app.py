@@ -56,9 +56,10 @@ def ask(question: str = typer.Argument(..., help="Question to ask")):
 
     # --- chain that stuffs retrieved docs into the prompt ----
     llm = OllamaLLM(
-        model="deepseek-r1", 
+        model="deepseek-r1:8b", 
         temperature=0.2,
-        reasoning=False # thinking mode
+        reasoning=False, # thinking mode
+        base_url="http://ollama:11434"
     )
 
     prompt = ChatPromptTemplate.from_messages(
